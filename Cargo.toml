@@ -1,0 +1,20 @@
+[package]
+name = "ndless-text-viewer"
+version = "0.1.0"
+authors = ["Florian Schmidt"]
+edition = "2021"
+
+[dependencies]
+ndless = { git = 'https://github.com/jacobk999/ndless-rs.git' }
+ndless-handler = { git = 'https://github.com/jacobk999/ndless-rs.git' }
+ndless-sdl = { git = 'https://github.com/jacobk999/ndless-rs.git' }
+
+# [package.metadata.zehn]
+# name = "ndless Text Viewer"
+# compress = true
+# notice = "Text viewer"
+# flags = "--240x320-support true --uses-lcd-blit true"
+
+# [profile.release]
+# lto = true
+# codegen-units = 1
