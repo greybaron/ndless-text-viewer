@@ -10,11 +10,12 @@ use alloc::vec::Vec;
 /// ```
 /// let font_config = (include_bytes!("assets/VeraMono-Bold.ttf").as_slice(), 16_usize, 6_usize, 11_usize);
 /// ```
-pub struct FontConfig {
+pub struct ViewerConfig {
     pub face: &'static [u8],
     pub font_size: isize,
     pub char_width: usize,
     pub char_height: usize,
+    pub white_mode: bool,
 }
 
 pub struct ScreenInfo {

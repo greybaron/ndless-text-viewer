@@ -1,6 +1,6 @@
 [package]
 name = "ndless-text-viewer"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Florian Schmidt"]
 edition = "2021"
 

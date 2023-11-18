@@ -1,7 +1,7 @@
 #![no_std]
 
 pub mod types;
-use crate::types::{CharData, Direction, FontConfig, ScreenInfo};
+use crate::types::{CharData, Direction, ScreenInfo, ViewerConfig};
 
 extern crate alloc;
 extern crate ndless_handler;
@@ -33,17 +33,18 @@ use unicode_segmentation::UnicodeSegmentation;
 /// ```
 /// # Example 2 - custom font
 /// ```
-/// use ndless_text_viewer::types::FontConfig;
+/// use ndless_text_viewer::types::ViewerConfig;
 ///
-/// let font_config = Some(FontConfig {
+/// let font_config = Some(ViewerConfig {
 ///     face: include_bytes!("assets/font.ttf").as_slice(),
 ///     font_size: 16_isize,
 ///     char_width: 6_usize,
 ///     char_height: 11_usize,
+///     white_mode: true,
 /// });
 /// ndless_text_viewer::display("Hello, world!", font_config);
 /// ```
-pub fn display(text: &str, config: Option<FontConfig>) {
+pub fn display(text: &str, config: Option<ViewerConfig>) {
     let (face, font_size, char_width, char_height) = match config {
         Some(config) => (
             config.face,
@@ -69,6 +70,7 @@ pub fn display(text: &str, config: Option<FontConfig>) {
     // save every rendered bitmap to buffer
     // using too many characters might exhaust RAM?
     let mut char_cache: BTreeMap<usize, CharData> = BTreeMap::new();
+    // let mut char_cache: Vec<(usize, CharData)> = Vec::new();
 
     let screen_info = ScreenInfo {
         char_width,
@@ -79,7 +81,8 @@ pub fn display(text: &str, config: Option<FontConfig>) {
 
     let input_lines = split_and_wrap_lines(text, screen_info.max_cols);
 
-    clear_screen(&screen);
+    // clear_screen(&screen);
+    screen.clear();
 
     let mut lines_scrolled_down = 0;
 
@@ -191,12 +194,14 @@ pub fn display(text: &str, config: Option<FontConfig>) {
             _ => {}
         }
     }
+    ndless_sdl::quit();
 }
 
 fn render_text(
     screen: &Surface,
     screen_info: &ScreenInfo,
     face: &Face,
+    // char_cache: &mut Vec<(usize, CharData)>,
     char_cache: &mut BTreeMap<usize, CharData>,
     input_lines: &[(String, bool)],
     lines_scrolled_down: usize,
@@ -226,18 +231,20 @@ fn render_text(
         draw_x = 0;
 
         for c in line.0.chars() {
-            let char_data = match char_cache.get(&(c as usize)) {
+            let c = c as usize;
+
+            let char_data_temp: CharData;
+
+            let char_data = match char_cache.get(&c) {
                 Some(data) => data,
                 None => {
-                    let c = c as usize;
-                    let face = face.clone();
                     face.load_char(c, ndless_freetype::face::LoadFlag::RENDER)
                         .unwrap();
 
                     let glyph = face.glyph();
                     let bm = glyph.bitmap();
 
-                    let data = CharData {
+                    char_data_temp = CharData {
                         bm_buffer: bm.buffer().to_vec(),
                         bm_left: glyph.bitmap_left() as usize,
                         bm_top: glyph.bitmap_top() as usize,
@@ -245,9 +252,9 @@ fn render_text(
                         bm_h: bm.rows() as usize,
                     };
 
-                    char_cache.insert(c, data);
-                    // :(
-                    char_cache.get(&c).unwrap()
+                    char_cache.insert(c, char_data_temp.clone());
+
+                    &char_data_temp
                 }
             };
 
@@ -364,16 +371,4 @@ fn split_and_wrap_lines(text: &str, width: usize) -> Vec<(String, bool)> {
     }
 
     lines
-}
-
-fn clear_screen(screen: &Surface) {
-    screen.fill_rect(
-        Some(ndless_sdl::Rect {
-            x: 0,
-            y: 0,
-            w: 320,
-            h: 240,
-        }),
-        ndless_sdl::video::RGB(0, 0, 0),
-    );
 }
